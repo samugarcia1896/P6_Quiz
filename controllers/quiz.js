@@ -5,15 +5,15 @@ const {models} = require("../models");
 exports.load = (req, res, next, quizId) => {
 
     models.quiz.findById(quizId)
-    .then(quiz => {
+        .then(quiz => {
         if (quiz) {
             req.quiz = quiz;
             next();
         } else {
             throw new Error('There is no quiz with id=' + quizId);
-        }
-    })
-    .catch(error => next(error));
+}
+})
+.catch(error => next(error));
 };
 
 
@@ -21,10 +21,10 @@ exports.load = (req, res, next, quizId) => {
 exports.index = (req, res, next) => {
 
     models.quiz.findAll()
-    .then(quizzes => {
+        .then(quizzes => {
         res.render('quizzes/index.ejs', {quizzes});
-    })
-    .catch(error => next(error));
+})
+.catch(error => next(error));
 };
 
 
@@ -41,7 +41,7 @@ exports.show = (req, res, next) => {
 exports.new = (req, res, next) => {
 
     const quiz = {
-        question: "", 
+        question: "",
         answer: ""
     };
 
@@ -60,19 +60,19 @@ exports.create = (req, res, next) => {
 
     // Saves only the fields question and answer into the DDBB
     quiz.save({fields: ["question", "answer"]})
-    .then(quiz => {
+        .then(quiz => {
         req.flash('success', 'Quiz created successfully.');
-        res.redirect('/quizzes/' + quiz.id);
-    })
-    .catch(Sequelize.ValidationError, error => {
+    res.redirect('/quizzes/' + quiz.id);
+})
+.catch(Sequelize.ValidationError, error => {
         req.flash('error', 'There are errors in the form:');
-        error.errors.forEach(({message}) => req.flash('error', message));
-        res.render('quizzes/new', {quiz});
-    })
-    .catch(error => {
+    error.errors.forEach(({message}) => req.flash('error', message));
+    res.render('quizzes/new', {quiz});
+})
+.catch(error => {
         req.flash('error', 'Error creating a new Quiz: ' + error.message);
-        next(error);
-    });
+    next(error);
+});
 };
 
 
@@ -94,19 +94,19 @@ exports.update = (req, res, next) => {
     quiz.answer = body.answer;
 
     quiz.save({fields: ["question", "answer"]})
-    .then(quiz => {
+        .then(quiz => {
         req.flash('success', 'Quiz edited successfully.');
-        res.redirect('/quizzes/' + quiz.id);
-    })
-    .catch(Sequelize.ValidationError, error => {
+    res.redirect('/quizzes/' + quiz.id);
+})
+.catch(Sequelize.ValidationError, error => {
         req.flash('error', 'There are errors in the form:');
-        error.errors.forEach(({message}) => req.flash('error', message));
-        res.render('quizzes/edit', {quiz});
-    })
-    .catch(error => {
+    error.errors.forEach(({message}) => req.flash('error', message));
+    res.render('quizzes/edit', {quiz});
+})
+.catch(error => {
         req.flash('error', 'Error editing the Quiz: ' + error.message);
-        next(error);
-    });
+    next(error);
+});
 };
 
 
@@ -114,14 +114,14 @@ exports.update = (req, res, next) => {
 exports.destroy = (req, res, next) => {
 
     req.quiz.destroy()
-    .then(() => {
+        .then(() => {
         req.flash('success', 'Quiz deleted successfully.');
-        res.redirect('/quizzes');
-    })
-    .catch(error => {
+    res.redirect('/quizzes');
+})
+.catch(error => {
         req.flash('error', 'Error deleting the Quiz: ' + error.message);
-        next(error);
-    });
+    next(error);
+});
 };
 
 
@@ -151,5 +151,61 @@ exports.check = (req, res, next) => {
         quiz,
         result,
         answer
+    });
+};
+exports.randomplay = (req, res, next) => {
+
+    req.session.randomPlay = req.session.randomPlay || [];
+    const op = Sequelize.Op;
+    const whereOp = {id: {[op.notIn]: req.session.randomPlay}}; //Ids que no estén en session.randomPlay
+
+    models.quiz.count({where:whereOp})
+        .then(count => {
+        if(count===0){  //todos los ids estan en session.randomPlay, ya se han jugado
+        const score = req.session.randomPlay.length;
+        req.session.randomPlay = []; //vaciamos para la siguiente vez comenzar el juego de 0.
+        res.render('quizzes/random_none',{
+            score
+        });
+    }
+    return models.quiz.findAll({    //Buscamos un quizz aleatoriamente que no esté en session.Play
+        where: whereOp,
+        offset: Math.floor(count*Math.random()),
+        limit: 1
+    })
+        .then(quizzes => {
+        return quizzes[0];
+});
+})
+.then(quiz =>{                      //Este quizz lo pasamos junto a la puntuacion que llevamos a la vista random_play.ejs
+        const score = req.session.randomPlay.length;
+    res.render('quizzes/random_play',{
+        quiz,
+        score
+    });
+})
+.catch(error => {
+        next(error);
+});
+};
+
+exports.randomcheck = (req, res, next) => {
+    req.session.randomPlay = req.session.randomPlay || [];
+    const answer = req.query.answer || "";
+    const result = answer.toLowerCase().trim() === req.quiz.answer.toLowerCase().trim();
+    let score = 0;
+
+    if (result) {
+        if (req.session.randomPlay.indexOf(req.quiz.id) === -1) {
+            req.session.randomPlay.push(req.quiz.id);
+            score = req.session.randomPlay.length;
+        }
+    } else {
+        req.session.randomPlay = [];
+    }
+    res.render('quizzes/random_result', {
+        answer,
+        result,
+        score
     });
 };
