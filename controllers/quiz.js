@@ -7,27 +7,27 @@ const paginate = require('../helpers/paginate').paginate;
 // Autoload the quiz with id equals to :quizId
 exports.load = (req, res, next, quizId) => {
 
-<<<<<<< HEAD
+
     models.quiz.findById(quizId, {
         include: [
-            models.tip,
+            {model: models.tip,
+                include: [{model: models.user, as: 'author'}]
+            },
             {model: models.user, as: 'author'}
         ]
     })
-    .then(quiz => {
-=======
-    models.quiz.findById(quizId)
         .then(quiz => {
->>>>>>> practica6
-        if (quiz) {
-            req.quiz = quiz;
-            next();
-        } else {
-            throw new Error('There is no quiz with id=' + quizId);
-}
-})
-.catch(error => next(error));
-};
+            if (quiz) {
+                req.quiz = quiz;
+                next();
+            } else {
+                throw new Error('There is no quiz with id=' + quizId);
+            }
+        })
+        .catch(error => next(error));
+
+
+
 
 
 // MW that allows actions only if the user logged in is admin or is the author of the quiz.
