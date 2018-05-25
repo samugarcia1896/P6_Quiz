@@ -39,7 +39,7 @@ quiz.belongsTo(user, {as: 'author', foreignKey: 'authorId'});
 
 // Relation 1-to-N between User and Quiz:
 user.hasMany(tips, {foreignKey: 'authorId'});
-tips.belongsTo(user, {as: 'author', foreignKey: 'authorId'});
+tips.belongsTo(user, {as: 'author', foreignKey: 'authorTip'});
 
 
 
