@@ -48,7 +48,6 @@ exports.adminOrAuthorRequired = (req, res, next) => {
 // GET /quizzes
 exports.index = (req, res, next) => {
 
-<<<<<<< HEAD
     let countOptions = {
         where: {}
     };
@@ -100,13 +99,13 @@ exports.index = (req, res, next) => {
         });
     })
     .catch(error => next(error));
-=======
+
     models.quiz.findAll()
         .then(quizzes => {
         res.render('quizzes/index.ejs', {quizzes});
 })
 .catch(error => next(error));
->>>>>>> practica6
+
 };
 
 
@@ -144,13 +143,13 @@ exports.create = (req, res, next) => {
     });
 
     // Saves only the fields question and answer into the DDBB
-<<<<<<< HEAD
+
     quiz.save({fields: ["question", "answer", "authorId"]})
     .then(quiz => {
-=======
+
     quiz.save({fields: ["question", "answer"]})
         .then(quiz => {
->>>>>>> practica6
+
         req.flash('success', 'Quiz created successfully.');
     res.redirect('/quizzes/' + quiz.id);
 })
@@ -206,15 +205,15 @@ exports.destroy = (req, res, next) => {
     req.quiz.destroy()
         .then(() => {
         req.flash('success', 'Quiz deleted successfully.');
-<<<<<<< HEAD
+
         res.redirect('/goback');
     })
     .catch(error => {
-=======
+
     res.redirect('/quizzes');
 })
 .catch(error => {
->>>>>>> practica6
+
         req.flash('error', 'Error deleting the Quiz: ' + error.message);
     next(error);
 });
